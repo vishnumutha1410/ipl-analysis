@@ -43,7 +43,7 @@ print(f"   Deliveries: {len(deliveries):,} rows")
 # ── 2. Clean ──────────────────────────────────────────────────────
 print("🧹  Cleaning …")
 matches.dropna(subset=["winner"], inplace=True)
-matches["season"] = matches["season"].astype(int)
+matches["season"] = matches["season"].astype(str).str.extract(r'(\d{4})')[0].astype(int)
 
 # ── 3. Chart 1 — Matches per Season ───────────────────────────────
 print("📊  Chart 1: Matches per season …")
@@ -67,8 +67,10 @@ plt.close()
 
 # ── 4. Chart 2 — Top 10 Run Scorers ───────────────────────────────
 print("📊  Chart 2: Top 10 run scorers …")
+batsman_col = "batsman" if "batsman" in deliveries.columns else "batter"
+runs_col = "batsman_runs" if "batsman_runs" in deliveries.columns else "runs_off_bat"
 top_batsmen = (
-    deliveries.groupby("batsman")["batsman_runs"]
+    deliveries.groupby(batsman_col)[runs_col]
     .sum()
     .sort_values(ascending=False)
     .head(10)
@@ -95,9 +97,11 @@ plt.close()
 print("📊  Chart 3: Top 10 wicket takers …")
 dismissals = ["caught", "bowled", "lbw", "stumped",
               "caught and bowled", "hit wicket"]
+dismissal_col = "dismissal_kind" if "dismissal_kind" in deliveries.columns else "wicket_type"
+bowler_col = "bowler" if "bowler" in deliveries.columns else "bowler"
 wickets = (
-    deliveries[deliveries["dismissal_kind"].isin(dismissals)]
-    .groupby("bowler")["dismissal_kind"]
+    deliveries[deliveries[dismissal_col].isin(dismissals)]
+    .groupby(bowler_col)[dismissal_col]
     .count()
     .sort_values(ascending=False)
     .head(10)
